@@ -25,7 +25,7 @@ export type Book = {
   views: number;
   shares: number;
   currentReads: number;
-  store?: { amazon?: string; gumroad?: string };
+  store?: { amazon?: string; gumroad?: string } | undefined;
 };
 
 export const HOF_CODE = "thof1856!";
