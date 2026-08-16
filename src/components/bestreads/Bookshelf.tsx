@@ -121,7 +121,9 @@ export function Bookshelf() {
   const { books, drafts, user, setView, deleteDraft, publishDraft, library } = useBestreads();
   const mine = books.filter((b) => b.authorId === user?.id && b.status === "published");
   const published = mine.length > 0 ? mine : books.slice(0, 3);
-  const [selected, setSelected] = useState<Book>(published[0]!);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = published.find((b) => b.id === selectedId) ?? published[0] ?? null;
+  const setSelected = (b: Book) => setSelectedId(b.id);
   const openDrafts = drafts.filter((d) => d.status === "draft");
 
   return (
@@ -179,7 +181,7 @@ export function Bookshelf() {
                 onClick={() => setSelected(b)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-2 text-left transition-colors hover:bg-accent",
-                  selected.id === b.id && "ring-2 ring-ring",
+                  selected?.id === b.id && "ring-2 ring-ring",
                 )}
               >
                 <div className="w-9 shrink-0">
