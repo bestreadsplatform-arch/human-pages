@@ -63,7 +63,7 @@ export const AUTHORS: Author[] = [
     username: "elena.inkwell",
     bio: "Writes at dawn, edits at dusk. Barcelona.",
     isPro: true,
-    isHallOfFameEditor: true,
+    isHallOfFameEditor: false,
   },
   {
     id: "a2",
@@ -79,7 +79,7 @@ export const AUTHORS: Author[] = [
     username: "marthaq",
     bio: "Poetry that refuses to hurry.",
     isPro: true,
-    isHallOfFameEditor: true,
+    isHallOfFameEditor: false,
   },
   {
     id: "a4",
@@ -103,7 +103,7 @@ export const AUTHORS: Author[] = [
     username: "ruthwrites",
     bio: "Short stories, no shortcuts.",
     isPro: false,
-    isHallOfFameEditor: true,
+    isHallOfFameEditor: false,
   },
   {
     id: "a7",
@@ -119,7 +119,7 @@ export const AUTHORS: Author[] = [
     username: "brice.noir",
     bio: "Rain, streetlights, unreliable narrators.",
     isPro: false,
-    isHallOfFameEditor: true,
+    isHallOfFameEditor: false,
   },
   {
     id: "a9",
@@ -135,76 +135,11 @@ export const AUTHORS: Author[] = [
     username: "cyrus.folio",
     bio: "Philosophy in plain clothes.",
     isPro: false,
-    isHallOfFameEditor: true,
+    isHallOfFameEditor: false,
   },
 ];
 
-const EXCERPT =
-  "She kept the letters in a tin that had once held tea, and every year the paper smelled a little less of him and a little more of the tin. That was the arithmetic of memory: something is always subtracted, something else is quietly added, and the sum insists it has not changed at all.\n\nOn the morning the river froze she walked out to the middle of it and listened. Nothing. Then, beneath her boots, the long complaint of ice deciding whether to hold.";
-
-type Seed = [string, string, string, string[], number, number, number, number, number];
-
-const SEEDS: Seed[] = [
-  ["a1", "The Salt Almanac", "A year on a fishing coast, told in tides, debts and small mercies.", ["#FICTION", "#NATURE"], 214, 0, 412, 91, 38],
-  ["a3", "Twelve Ways to Leave a Room", "Poems about doorways, hesitation, and the courage of the last step.", ["#POETRY"], 88, 3, 388, 74, 51],
-  ["a5", "Cold Light Over Malmö", "A slow detective story where nobody raises their voice.", ["#NOIR", "#FICTION"], 302, 1, 355, 62, 22],
-  ["a7", "Marginalia", "Notes written in the edges of borrowed books, collected into a life.", ["#MEMOIR", "#ESSAY"], 146, 8, 331, 58, 44],
-  ["a9", "Estuary Hours", "Field notes from six months of watching water change its mind.", ["#NATURE", "#ESSAY"], 178, 2, 318, 49, 27],
-  ["a2", "The Loud City Diaries", "Prose that walks slowly through a place that never does.", ["#MEMOIR"], 132, 6, 296, 41, 19],
-  ["a6", "Nine Doors, No Keys", "Nine short stories about rooms that will not open.", ["#SHORTSTORY", "#FICTION"], 121, 5, 275, 47, 31],
-  ["a8", "Streetlight Confessions", "A noir novella where the rain is the only honest witness.", ["#NOIR"], 96, 4, 261, 39, 24],
-  ["a10", "Plain Clothes Philosophy", "Ten arguments about ordinary life, made without jargon.", ["#PHILOSOPHY", "#ESSAY"], 205, 9, 244, 36, 17],
-  ["a4", "The River Owes Us Nothing", "Essays on inheritance, land, and the water that outlives both.", ["#ESSAY", "#HISTORY"], 188, 7, 232, 44, 26],
-  ["a1", "Letters to a Tin Box", "Epistolary fiction about a love kept in storage for thirty years.", ["#ROMANCE", "#FICTION"], 164, 6, 198, 33, 15],
-  ["a3", "Rope, Bread, Weather", "Short poems written on receipts during one winter.", ["#POETRY"], 62, 1, 187, 28, 21],
-  ["a7", "The Quiet Interview", "Conversations with people who never wanted to be asked.", ["#ESSAY"], 210, 2, 174, 25, 12],
-  ["a6", "Grandmother's Radio", "A short story cycle set across one apartment block.", ["#SHORTSTORY"], 108, 3, 161, 22, 18],
-  ["a5", "The Ninth Winter", "A historical novel about a village that voted to disappear.", ["#HISTORY", "#FICTION"], 340, 8, 149, 19, 9],
-  ["a9", "Birds I Failed to Name", "A nature memoir about attention and its limits.", ["#NATURE", "#MEMOIR"], 154, 5, 138, 24, 14],
-  ["a2", "Small Rooms, Big Weather", "Fiction about roommates, storms and unpaid rent.", ["#FICTION"], 176, 0, 122, 17, 8],
-  ["a8", "Twelve O'Clock Somewhere", "Noir shorts set in twelve time zones.", ["#NOIR", "#SHORTSTORY"], 143, 4, 111, 15, 11],
-  ["a10", "Against Certainty", "An essay in defence of changing your mind.", ["#PHILOSOPHY"], 74, 9, 98, 13, 7],
-  ["a4", "Inheritance Papers", "Family history assembled from deeds, arguments and photographs.", ["#HISTORY", "#MEMOIR"], 262, 7, 84, 11, 6],
-];
-
-function hash(str: string) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return Math.abs(h);
-}
-
-export const BOOKS: Book[] = SEEDS.map((s, i) => {
-  const [authorId, title, summary, hashtags, pages, cover, month, shares, currentReads] = s;
-  const h = hash(title);
-  const today = Math.max(3, Math.round(month / (7 + (h % 5))));
-  const week = Math.max(today + 2, Math.round(month / (2 + (h % 2))));
-  return {
-    id: `b${i + 1}`,
-    authorId,
-    title,
-    summary,
-    hashtags,
-    excerpt: EXCERPT,
-    pages,
-    cover,
-    launchDate: new Date(Date.UTC(2026, 5 + (i % 3), 1 + (h % 26))).toISOString(),
-    status: "published" as const,
-    upvotes: { today, week, month },
-    totalUpvotes: month + 340 + (h % 700),
-    views: month * 27 + (h % 1500),
-    shares,
-    currentReads,
-    store:
-      i % 3 === 0
-        ? { amazon: "https://amazon.example/bestreads", gumroad: "https://gumroad.example/bestreads" }
-        : i % 3 === 1
-          ? { gumroad: "https://gumroad.example/bestreads" }
-          : undefined,
-  };
-});
+export const BOOKS: Book[] = [];
 
 export const authorById = (id: string) => AUTHORS.find((a) => a.id === id)!;
 
@@ -300,7 +235,15 @@ export type HofFeature = {
   interview: { q: string; a: string }[];
   audioMinutes: number;
   videoTitle: string;
+  media: HofMedia;
 };
+
+export type ChatMessage = { id: string; role: "moderator" | "author"; text: string };
+
+export type HofMedia =
+  | { kind: "audio"; url: string; minutes: number }
+  | { kind: "video"; url: string; title: string }
+  | { kind: "chat"; authorName: string; messages: ChatMessage[] };
 
 export const HOF_ISSUE = {
   issue: "No. 24",
