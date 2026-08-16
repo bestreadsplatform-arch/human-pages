@@ -14,13 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      books: {
+        Row: {
+          author_id: string
+          content: string
+          cover: number
+          cover_url: string | null
+          created_at: string
+          hashtags: string[]
+          id: string
+          pages: number
+          reads_count: number
+          status: string
+          summary: string
+          title: string
+          upvotes_count: number
+        }
+        Insert: {
+          author_id: string
+          content?: string
+          cover?: number
+          cover_url?: string | null
+          created_at?: string
+          hashtags?: string[]
+          id?: string
+          pages?: number
+          reads_count?: number
+          status?: string
+          summary?: string
+          title: string
+          upvotes_count?: number
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          cover?: number
+          cover_url?: string | null
+          created_at?: string
+          hashtags?: string[]
+          id?: string
+          pages?: number
+          reads_count?: number
+          status?: string
+          summary?: string
+          title?: string
+          upvotes_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          is_hall_of_fame_editor: boolean
+          name: string
+          tier: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+          is_hall_of_fame_editor?: boolean
+          name?: string
+          tier?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_hall_of_fame_editor?: boolean
+          name?: string
+          tier?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      upvotes: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upvotes_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upvotes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      redeem_hof_code: { Args: { _code: string }; Returns: Json }
+      username_available: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
