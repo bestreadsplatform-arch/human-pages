@@ -9,10 +9,10 @@ export function BookCover({
   className,
 }: {
   title: string;
-  author?: string;
+  author?: string | undefined;
   cover: number;
   image?: string | undefined;
-  className?: string;
+  className?: string | undefined;
 }) {
   const palette = COVER_PALETTES[cover % COVER_PALETTES.length]!;
   return (

@@ -114,15 +114,24 @@ export function Studio() {
   const addTag = () => {
     const t = tagInput.trim().replace(/^#*/, "");
     if (!t) return;
-    if (tags.length >= 5) return toast.error("Maximum of 5 hashtags per text.");
+    if (tags.length >= 5) {
+      toast.error("Maximum of 5 hashtags per text.");
+      return;
+    }
     setTags((p) => [...p, `#${t.toUpperCase()}`]);
     setTagInput("");
   };
 
   const persist = (publish: boolean) => {
-    if (!title.trim()) return toast.error("Your text needs a title.");
+    if (!title.trim()) {
+      toast.error("Your text needs a title.");
+      return;
+    }
     const res = saveDraft({ title, summary, hashtags: tags, body, cover: 2, coverImage });
-    if (!res.ok) return toast.error(res.error ?? "Could not save");
+    if (!res.ok) {
+      toast.error(res.error ?? "Could not save");
+      return;
+    }
     toast.success(publish ? "Sent to your bookshelf as published draft" : "Draft saved");
     setView("bookshelf");
   };
