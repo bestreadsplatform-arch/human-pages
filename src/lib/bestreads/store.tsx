@@ -1,6 +1,7 @@
 import {
   createContext,
   useCallback,
+  useEffect,
   useContext,
   useMemo,
   useState,
@@ -11,9 +12,12 @@ import {
   BOOKS,
   GENRES,
   HOF_CODE,
+  HOF_FEATURES,
   authorById,
   type Author,
   type Book,
+  type HofFeature,
+  type HofMedia,
   type TimeFilter,
 } from "./data";
 
@@ -65,6 +69,8 @@ type Store = {
   maxPages: number | null;
   activeGenre: string | null;
   hofEditorCount: number;
+  hofFeatures: HofFeature[];
+  updateHofMedia: (authorId: string, media: HofMedia) => void;
   signUp: (input: SignUpInput) => { ok: boolean; error?: string };
   signIn: (username: string) => { ok: boolean; error?: string };
   signOut: () => void;
@@ -101,28 +107,7 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [accounts, setAccounts] = useState<SessionUser[]>([]);
   const [books, setBooks] = useState<Book[]>(BOOKS);
-  const [drafts, setDrafts] = useState<Draft[]>([
-    {
-      id: "d1",
-      title: "The Hour Before Rain",
-      summary: "An unfinished novella about a weather station and a broken radio.",
-      hashtags: ["#FICTION"],
-      body: "The station kept time badly, which suited everyone who lived near it.",
-      cover: 8,
-      status: "draft",
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: "d2",
-      title: "Six Poems for a Late Train",
-      summary: "Poems written between two stations, both of them wrong.",
-      hashtags: ["#POETRY"],
-      body: "The platform announces a delay in the voice of someone who has stopped apologising.",
-      cover: 3,
-      status: "draft",
-      createdAt: new Date().toISOString(),
-    },
-  ]);
+    const [drafts, setDrafts] = useState<Draft[]>([]);
   const [filter, setFilter] = useState<TimeFilter>("today");
   const [genreSlots, setGenreSlots] = useState<(string | null)[]>(["#POETRY", "#FICTION", "#NOIR"]);
   const [search, setSearch] = useState("");
@@ -135,9 +120,13 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
   const [library, setLibrary] = useState<string[]>(["b1", "b4"]);
   const [maxPages, setMaxPages] = useState<number | null>(null);
   const [activeGenre, setActiveGenre] = useState<string | null>(null);
-  const [hofEditorCount, setHofEditorCount] = useState(
-    AUTHORS.filter((a) => a.isHallOfFameEditor).length,
-  );
+  const [hofEditorCount, setHofEditorCount] = useState(0);
+  const [hofFeatures, setHofFeatures] = useState<HofFeature[]>(HOF_FEATURES);
+
+  const updateHofMedia = useCallback((authorId: string, media: HofMedia) => {
+    setHofFeatures((prev) => prev.map((f) => (f.authorId === authorId ? { ...f, media } : f)));
+  }, []);
+
 
   const signUp = useCallback(
     ({ name, username, accessCode }: SignUpInput) => {
@@ -199,26 +188,25 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
   );
 
   const toggleUpvote = useCallback((bookId: string) => {
-    setUpvoted((prev) => {
-      const on = prev.includes(bookId);
-      setBooks((bs) =>
-        bs.map((b) =>
-          b.id === bookId
-            ? {
-                ...b,
-                totalUpvotes: b.totalUpvotes + (on ? -1 : 1),
-                upvotes: {
-                  today: b.upvotes.today + (on ? -1 : 1),
-                  week: b.upvotes.week + (on ? -1 : 1),
-                  month: b.upvotes.month + (on ? -1 : 1),
-                },
-              }
-            : b,
-        ),
-      );
-      return on ? prev.filter((id) => id !== bookId) : [...prev, bookId];
-    });
+    setUpvoted((prev) => (prev.includes(bookId) ? prev.filter((id) => id !== bookId) : [...prev, bookId]));
   }, []);
+
+  useEffect(() => {
+    setBooks((bs) =>
+      bs.map((b) => {
+        const delta = upvoted.includes(b.id) ? 1 : 0;
+        const base = b.baseUpvotes ?? b.upvotes;
+        return {
+          ...b,
+          upvotes: {
+            today: base.today + delta,
+            week: base.week + delta,
+            month: base.month + delta,
+          },
+        };
+      }),
+    );
+  }, [upvoted]);
 
   const toggleFollow = useCallback((authorId: string) => {
     setFollowing((prev) =>
@@ -340,6 +328,8 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     maxPages,
     activeGenre,
     hofEditorCount,
+    hofFeatures,
+    updateHofMedia,
     signUp,
     signIn,
     signOut: () => setUser(null),
