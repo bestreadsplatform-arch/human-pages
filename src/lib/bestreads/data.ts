@@ -141,6 +141,16 @@ export const AUTHORS: Author[] = [
 
 export const BOOKS: Book[] = [];
 
+function hash(str: string) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+
 export const authorById = (id: string) => AUTHORS.find((a) => a.id === id)!;
 
 /* ---------- CEST reset logic (UTC+2) ---------- */
