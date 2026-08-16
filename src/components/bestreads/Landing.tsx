@@ -17,7 +17,7 @@ function Carousel({ dimmed }: { dimmed: boolean }) {
   return (
     <div
       className={cn(
-        "group/marquee absolute inset-x-0 bottom-0 flex h-[46vh] items-end overflow-hidden pb-10 transition-all duration-500",
+        "group/marquee relative flex w-full items-end overflow-hidden py-6 transition-all duration-500",
         dimmed && "scale-[1.03] blur-[2px]",
       )}
       aria-hidden
@@ -74,8 +74,6 @@ export function Landing() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background">
-      <Carousel dimmed={open} />
-
       <div
         className={cn(
           "pointer-events-none absolute inset-0 z-10 bg-background/70 backdrop-blur-md transition-opacity duration-500",
@@ -112,9 +110,9 @@ export function Landing() {
           </div>
         </header>
 
-        <div className="flex flex-1 items-center justify-center px-4 pb-16">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 pt-6 pb-10">
           {!open ? (
-            <div className="max-w-2xl rounded-2xl bg-background/85 px-8 py-10 text-center shadow-soft backdrop-blur-sm">
+            <div className="max-w-2xl text-center">
               <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium backdrop-blur-sm">
                 <BadgeCheck className="size-3.5 text-verified" />
                 Strictly no AI. Every word written by a person.
@@ -232,6 +230,7 @@ export function Landing() {
             </div>
           )}
         </div>
+        <Carousel dimmed={open} />
       </div>
     </main>
   );
