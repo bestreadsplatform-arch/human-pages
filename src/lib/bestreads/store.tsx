@@ -1,7 +1,6 @@
 import {
   createContext,
   useCallback,
-  useEffect,
   useContext,
   useMemo,
   useState,
@@ -70,6 +69,7 @@ type Store = {
   activeGenre: string | null;
   hofEditorCount: number;
   hofFeatures: HofFeature[];
+  upvoteCount: (book: Book) => number;
   updateHofMedia: (authorId: string, media: HofMedia) => void;
   signUp: (input: SignUpInput) => { ok: boolean; error?: string };
   signIn: (username: string) => { ok: boolean; error?: string };
@@ -191,22 +191,10 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     setUpvoted((prev) => (prev.includes(bookId) ? prev.filter((id) => id !== bookId) : [...prev, bookId]));
   }, []);
 
-  useEffect(() => {
-    setBooks((bs) =>
-      bs.map((b) => {
-        const delta = upvoted.includes(b.id) ? 1 : 0;
-        const base = b.baseUpvotes ?? b.upvotes;
-        return {
-          ...b,
-          upvotes: {
-            today: base.today + delta,
-            week: base.week + delta,
-            month: base.month + delta,
-          },
-        };
-      }),
-    );
-  }, [upvoted]);
+  const upvoteCount = useCallback(
+    (book: Book) => book.upvotes[filter] + (upvoted.includes(book.id) ? 1 : 0),
+    [filter, upvoted],
+  );
 
   const toggleFollow = useCallback((authorId: string) => {
     setFollowing((prev) =>
@@ -329,6 +317,7 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     activeGenre,
     hofEditorCount,
     hofFeatures,
+    upvoteCount,
     updateHofMedia,
     signUp,
     signIn,
