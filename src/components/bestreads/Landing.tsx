@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AUTHORS, BOOKS, authorById } from "@/lib/bestreads/data";
+import { GENRES } from "@/lib/bestreads/data";
 import { useBestreads } from "@/lib/bestreads/store";
 import { cn } from "@/lib/utils";
 
 function Carousel({ dimmed }: { dimmed: boolean }) {
-  const covers = BOOKS.slice(0, 20);
-  const row = [...covers, ...covers];
+  const row = [...GENRES, ...GENRES];
   return (
     <div
       className={cn(
@@ -26,21 +25,14 @@ function Carousel({ dimmed }: { dimmed: boolean }) {
         className="animate-marquee flex w-max gap-6 px-6 group-hover/marquee:[animation-play-state:paused]"
         style={{ ["--marquee-duration" as string]: "90s" }}
       >
-        {row.map((b, i) => (
-          <div key={`${b.id}-${i}`} className="group/cover relative w-36 shrink-0 md:w-44">
+        {row.map((g, i) => (
+          <div key={`${g}-${i}`} className="group/cover relative w-36 shrink-0 md:w-44">
             <BookCover
-              title={b.title}
-              author={authorById(b.authorId).name}
-              cover={b.cover}
+              title={g.replace("#", "")}
+              author="Awaiting its first human author"
+              cover={i % 10}
               className="transition-transform duration-500 group-hover/cover:-translate-y-2"
             />
-            <button
-              type="button"
-              onClick={() => toast("Sign in to upvote", { description: `“${b.title}”` })}
-              className="absolute inset-x-0 -bottom-3 mx-auto flex w-14 translate-y-2 items-center justify-center gap-1 rounded-full border border-border bg-card py-1.5 text-xs font-semibold opacity-0 shadow-lift transition-all duration-300 group-hover/cover:translate-y-0 group-hover/cover:opacity-100"
-            >
-              <ArrowBigUp className="size-4" />
-            </button>
           </div>
         ))}
       </div>
@@ -53,7 +45,7 @@ export function Landing() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("signin");
 
-  const [handle, setHandle] = useState("elena.inkwell");
+  const [handle, setHandle] = useState("");
   const [name, setName] = useState("");
   const [newHandle, setNewHandle] = useState("");
   const [code, setCode] = useState("");
@@ -165,11 +157,9 @@ export function Landing() {
                       placeholder="@yourhandle"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Demo handles:{" "}
-                      {AUTHORS.slice(0, 3)
-                        .map((a) => `@${a.username}`)
-                        .join(", ")}
+                      Use the @username you registered with.
                     </p>
+
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pw">Password</Label>

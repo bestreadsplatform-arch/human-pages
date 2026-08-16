@@ -112,7 +112,7 @@ function StoreLinks({ book }: { book: Book }) {
 }
 
 function UpvoteButton({ book }: { book: Book }) {
-  const { upvoted, toggleUpvote, filter } = useBestreads();
+  const { upvoted, toggleUpvote, upvoteCount } = useBestreads();
   const on = upvoted.includes(book.id);
   return (
     <button
@@ -123,7 +123,7 @@ function UpvoteButton({ book }: { book: Book }) {
       )}
     >
       <ArrowBigUp className={cn("size-5", on && "fill-current")} />
-      <span className="text-metric text-sm font-semibold">{book.upvotes[filter]}</span>
+      <span className="text-metric text-sm font-semibold">{upvoteCount(book)}</span>
       <span className="text-[0.55rem] tracking-widest uppercase opacity-70">
         {on ? "voted" : "vote"}
       </span>
