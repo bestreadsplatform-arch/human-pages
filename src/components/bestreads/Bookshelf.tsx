@@ -121,7 +121,9 @@ export function Bookshelf() {
   const { books, drafts, user, setView, deleteDraft, publishDraft, library } = useBestreads();
   const mine = books.filter((b) => b.authorId === user?.id && b.status === "published");
   const published = mine.length > 0 ? mine : books.slice(0, 3);
-  const [selected, setSelected] = useState<Book>(published[0]!);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = published.find((b) => b.id === selectedId) ?? published[0] ?? null;
+  const setSelected = (b: Book) => setSelectedId(b.id);
   const openDrafts = drafts.filter((d) => d.status === "draft");
 
   return (
