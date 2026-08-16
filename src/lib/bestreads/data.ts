@@ -276,6 +276,17 @@ export const HOF_FEATURES: HofFeature[] = [
     ],
     audioMinutes: 18,
     videoTitle: "Reading: 'Rope, Bread, Weather' — live from Leeds",
+    media: {
+      kind: "chat",
+      authorName: "Martha Quill",
+      messages: [
+        { id: "m1", role: "moderator", text: "Martha — you write on receipts. Why?" },
+        { id: "m2", role: "author", text: "They're free, they're small, and they curl." },
+        { id: "m3", role: "author", text: "A curling poem tells you exactly when to stop." },
+        { id: "m4", role: "moderator", text: "And the ninth draft?" },
+        { id: "m5", role: "author", text: "That's the one people are allowed to read." },
+      ],
+    },
   },
   {
     authorId: "a1",
@@ -288,6 +299,7 @@ export const HOF_FEATURES: HofFeature[] = [
     ],
     audioMinutes: 24,
     videoTitle: "Studio call: building a year-long structure",
+    media: { kind: "audio", url: "", minutes: 24 },
   },
   {
     authorId: "a7",
@@ -300,6 +312,7 @@ export const HOF_FEATURES: HofFeature[] = [
     ],
     audioMinutes: 12,
     videoTitle: "Video conference: Marginalia, one year later",
+    media: { kind: "video", url: "", title: "Video conference: Marginalia, one year later" },
   },
   {
     authorId: "a9",
@@ -312,6 +325,7 @@ export const HOF_FEATURES: HofFeature[] = [
     ],
     audioMinutes: 31,
     videoTitle: "Walk-and-talk: the estuary at low water",
+    media: { kind: "audio", url: "", minutes: 31 },
   },
   {
     authorId: "a6",
@@ -324,5 +338,16 @@ export const HOF_FEATURES: HofFeature[] = [
     ],
     audioMinutes: 21,
     videoTitle: "Recorded panel: the short story is not a warm-up",
+    media: {
+      kind: "chat",
+      authorName: "Ruth Okonjo",
+      messages: [
+        { id: "m1", role: "moderator", text: "Nine doors, one building. Did neighbours recognise themselves?" },
+        { id: "m2", role: "author", text: "Three did. Two were flattered." },
+        { id: "m3", role: "author", text: "One moved out." },
+        { id: "m4", role: "moderator", text: "Next project?" },
+        { id: "m5", role: "author", text: "The same building, forty years earlier." },
+      ],
+    },
   },
 ];
