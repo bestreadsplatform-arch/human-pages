@@ -17,7 +17,7 @@ function Carousel({ dimmed }: { dimmed: boolean }) {
   return (
     <div
       className={cn(
-        "group/marquee absolute inset-0 flex items-center overflow-hidden transition-all duration-500",
+        "group/marquee absolute inset-x-0 bottom-0 flex h-[46vh] items-end overflow-hidden pb-10 transition-all duration-500",
         dimmed && "scale-[1.03] blur-[2px]",
       )}
       aria-hidden
@@ -27,7 +27,7 @@ function Carousel({ dimmed }: { dimmed: boolean }) {
         style={{ ["--marquee-duration" as string]: "90s" }}
       >
         {row.map((b, i) => (
-          <div key={`${b.id}-${i}`} className="group/cover relative w-40 shrink-0 md:w-48">
+          <div key={`${b.id}-${i}`} className="group/cover relative w-36 shrink-0 md:w-44">
             <BookCover
               title={b.title}
               author={authorById(b.authorId).name}
@@ -114,7 +114,7 @@ export function Landing() {
 
         <div className="flex flex-1 items-center justify-center px-4 pb-16">
           {!open ? (
-            <div className="max-w-2xl text-center">
+            <div className="max-w-2xl rounded-2xl bg-background/85 px-8 py-10 text-center shadow-soft backdrop-blur-sm">
               <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-3 py-1 text-xs font-medium backdrop-blur-sm">
                 <BadgeCheck className="size-3.5 text-verified" />
                 Strictly no AI. Every word written by a person.
