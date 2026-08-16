@@ -45,7 +45,7 @@ export function Landing() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("signin");
 
-  const [handle, setHandle] = useState("elena.inkwell");
+  const [handle, setHandle] = useState("");
   const [name, setName] = useState("");
   const [newHandle, setNewHandle] = useState("");
   const [code, setCode] = useState("");

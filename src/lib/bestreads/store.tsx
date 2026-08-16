@@ -182,7 +182,7 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
         });
         return { ok: true };
       }
-      return { ok: false, error: "No account with that @username. Try @elena.inkwell." };
+      return { ok: false, error: "No account with that @username yet — sign up to create it." };
     },
     [accounts],
   );
