@@ -181,7 +181,7 @@ export function Bookshelf() {
                 onClick={() => setSelected(b)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg border border-border bg-card p-2 text-left transition-colors hover:bg-accent",
-                  selected.id === b.id && "ring-2 ring-ring",
+                  selected?.id === b.id && "ring-2 ring-ring",
                 )}
               >
                 <div className="w-9 shrink-0">
