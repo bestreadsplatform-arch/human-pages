@@ -63,6 +63,7 @@ type Store = {
   library: string[];
   proSortEnabled: boolean;
   maxPages: number | null;
+  activeGenre: string | null;
   hofEditorCount: number;
   signUp: (input: SignUpInput) => { ok: boolean; error?: string };
   signIn: (username: string) => { ok: boolean; error?: string };
@@ -82,6 +83,7 @@ type Store = {
   publishDraft: (id: string) => void;
   deleteDraft: (id: string) => void;
   setMaxPages: (p: number | null) => void;
+  setActiveGenre: (g: string | null) => void;
   availableGenres: string[];
   hashtagSearch: string | null;
   visibleBooks: Book[];
@@ -132,6 +134,7 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
   const [following, setFollowing] = useState<string[]>(["a3", "a7"]);
   const [library, setLibrary] = useState<string[]>(["b1", "b4"]);
   const [maxPages, setMaxPages] = useState<number | null>(null);
+  const [activeGenre, setActiveGenre] = useState<string | null>(null);
   const [hofEditorCount, setHofEditorCount] = useState(
     AUTHORS.filter((a) => a.isHallOfFameEditor).length,
   );
@@ -274,9 +277,6 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     return q.startsWith("#") && q.length > 1 ? q.toUpperCase() : null;
   }, [search]);
 
-  const [activeGenre, setActiveGenre] = useState<string | null>(null);
-  void activeGenre;
-  void setActiveGenre;
 
   const visibleBooks = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -291,9 +291,10 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
           authorById(b.authorId).username.includes(q.replace("@", "")),
       );
     }
+    if (activeGenre) list = list.filter((b) => b.hashtags.includes(activeGenre));
     if (user?.tier === "pro" && maxPages) list = list.filter((b) => b.pages <= maxPages);
     return [...list].sort((a, b) => b.upvotes[filter] - a.upvotes[filter]);
-  }, [books, search, filter, user, maxPages]);
+  }, [books, search, filter, user, maxPages, activeGenre]);
 
   const topTen = useMemo(() => visibleBooks.slice(0, 10), [visibleBooks]);
   const streamBooksBase = useMemo(() => visibleBooks.slice(10), [visibleBooks]);
@@ -337,6 +338,7 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     library,
     proSortEnabled: user?.tier === "pro",
     maxPages,
+    activeGenre,
     hofEditorCount,
     signUp,
     signIn,
@@ -356,6 +358,7 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     publishDraft,
     deleteDraft,
     setMaxPages,
+    setActiveGenre,
     availableGenres: GENRES,
     hashtagSearch,
     visibleBooks,
