@@ -157,11 +157,9 @@ export function Landing() {
                       placeholder="@yourhandle"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Demo handles:{" "}
-                      {AUTHORS.slice(0, 3)
-                        .map((a) => `@${a.username}`)
-                        .join(", ")}
+                      Use the @username you registered with.
                     </p>
+
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pw">Password</Label>
