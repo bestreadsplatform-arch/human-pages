@@ -157,25 +157,39 @@ export function Landing() {
                 <TabsContent value="signin" className="mt-5 space-y-4">
                   <h2 className="font-display text-2xl font-semibold">Welcome back</h2>
                   <div className="space-y-2">
-                    <Label htmlFor="handle">Your @username</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="handle"
-                      value={handle}
-                      onChange={(e) => setHandle(e.target.value)}
-                      placeholder="@yourhandle"
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Use the @username you registered with.
-                    </p>
-
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pw">Password</Label>
-                    <Input id="pw" type="password" defaultValue="readingisgood" />
+                    <div className="relative">
+                      <Input
+                        id="pw"
+                        type={showPw ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw((s) => !s)}
+                        className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
+                        aria-label={showPw ? "Hide password" : "Show password"}
+                      >
+                        {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
                   </div>
-                  <Button className="w-full" onClick={doSignIn}>
-                    Enter the library
+                  <Button className="w-full" onClick={doSignIn} disabled={busy}>
+                    {busy ? "Opening…" : "Enter the library"}
                   </Button>
+
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-5 space-y-4">
