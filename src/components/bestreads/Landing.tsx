@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowBigUp, BadgeCheck, KeyRound, PenLine } from "lucide-react";
+import { ArrowBigUp, BadgeCheck, Eye, EyeOff, KeyRound, PenLine } from "lucide-react";
 import { toast } from "sonner";
 
 import { BookCover } from "./BookCover";
@@ -44,25 +44,33 @@ export function Landing() {
   const { signIn, signUp } = useBestreads();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("signin");
+  const [busy, setBusy] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
-  const [handle, setHandle] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [newHandle, setNewHandle] = useState("");
   const [code, setCode] = useState("");
 
-  const doSignIn = () => {
-    const res = signIn(handle);
+  const doSignIn = async () => {
+    setBusy(true);
+    const res = await signIn(email, password);
+    setBusy(false);
     if (!res.ok) toast.error(res.error ?? "Could not sign in");
   };
 
-  const doSignUp = () => {
-    const res = signUp({ name, username: newHandle, accessCode: code });
+  const doSignUp = async () => {
+    setBusy(true);
+    const res = await signUp({ email, password, name, username: newHandle, accessCode: code });
+    setBusy(false);
     if (!res.ok) toast.error(res.error ?? "Could not sign up");
     else if (code.trim().length > 0)
       toast.success("Hall of Fame editor privileges unlocked", {
         description: "You can now edit the magazine.",
       });
   };
+
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background">
@@ -149,30 +157,75 @@ export function Landing() {
                 <TabsContent value="signin" className="mt-5 space-y-4">
                   <h2 className="font-display text-2xl font-semibold">Welcome back</h2>
                   <div className="space-y-2">
-                    <Label htmlFor="handle">Your @username</Label>
+                    <Label htmlFor="email">Email</Label>
                     <Input
-                      id="handle"
-                      value={handle}
-                      onChange={(e) => setHandle(e.target.value)}
-                      placeholder="@yourhandle"
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Use the @username you registered with.
-                    </p>
-
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="pw">Password</Label>
-                    <Input id="pw" type="password" defaultValue="readingisgood" />
+                    <div className="relative">
+                      <Input
+                        id="pw"
+                        type={showPw ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw((s) => !s)}
+                        className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
+                        aria-label={showPw ? "Hide password" : "Show password"}
+                      >
+                        {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
                   </div>
-                  <Button className="w-full" onClick={doSignIn}>
-                    Enter the library
+                  <Button className="w-full" onClick={doSignIn} disabled={busy}>
+                    {busy ? "Opening…" : "Enter the library"}
                   </Button>
+
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-5 space-y-4">
                   <h2 className="font-display text-2xl font-semibold">Create your handle</h2>
                   <div className="space-y-2">
+                    <Label htmlFor="su-email">Email</Label>
+                    <Input
+                      id="su-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="su-pw">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="su-pw"
+                        type={showPw ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw((s) => !s)}
+                        className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
+                        aria-label={showPw ? "Hide password" : "Show password"}
+                      >
+                        {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+
                     <Label htmlFor="name">Display name</Label>
                     <Input
                       id="name"
@@ -205,9 +258,10 @@ export function Landing() {
                       placeholder="Magazine passkey"
                     />
                   </div>
-                  <Button className="w-full" onClick={doSignUp}>
-                    Join Bestreads
+                  <Button className="w-full" onClick={doSignUp} disabled={busy}>
+                    {busy ? "Creating…" : "Join Bestreads"}
                   </Button>
+
                 </TabsContent>
               </Tabs>
               <button

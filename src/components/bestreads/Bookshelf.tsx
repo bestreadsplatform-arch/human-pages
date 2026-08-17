@@ -193,8 +193,14 @@ export function Bookshelf() {
           </div>
         </div>
 
+        {!selected ? (
+          <p className="text-sm text-muted-foreground">
+            Publish a book to see its analytics here.
+          </p>
+        ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+
             {[
               ["Views", selected.views],
               ["Upvotes", selected.totalUpvotes],
@@ -228,7 +234,10 @@ export function Bookshelf() {
             </>
           )}
         </div>
+        )}
       </section>
+
+
     </div>
   );
 }

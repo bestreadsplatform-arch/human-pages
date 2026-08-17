@@ -2,10 +2,13 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
 import {
   AUTHORS,
   BOOKS,
@@ -44,10 +47,15 @@ export type Draft = {
 };
 
 type SignUpInput = {
+  email: string;
+  password: string;
   name: string;
   username: string;
   accessCode: string;
 };
+
+type AuthResult = { ok: boolean; error?: string };
+
 
 type Store = {
   user: SessionUser | null;
@@ -69,11 +77,13 @@ type Store = {
   activeGenre: string | null;
   hofEditorCount: number;
   hofFeatures: HofFeature[];
+  authLoading: boolean;
   upvoteCount: (book: Book) => number;
   updateHofMedia: (authorId: string, media: HofMedia) => void;
-  signUp: (input: SignUpInput) => { ok: boolean; error?: string };
-  signIn: (username: string) => { ok: boolean; error?: string };
-  signOut: () => void;
+  signUp: (input: SignUpInput) => Promise<AuthResult>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signOut: () => Promise<void>;
+
   setFilter: (f: TimeFilter) => void;
   setGenreSlot: (index: number, genre: string | null) => void;
   setSearch: (s: string) => void;
@@ -105,8 +115,9 @@ const FREE_DRAFT_LIMIT = 5;
 
 export function BestreadsProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
-  const [accounts, setAccounts] = useState<SessionUser[]>([]);
+  const [authLoading, setAuthLoading] = useState(true);
   const [books] = useState<Book[]>(BOOKS);
+
     const [drafts, setDrafts] = useState<Draft[]>([]);
   const [filter, setFilter] = useState<TimeFilter>("today");
   const [genreSlots, setGenreSlots] = useState<(string | null)[]>(["#POETRY", "#FICTION", "#NOIR"]);
@@ -127,65 +138,106 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     setHofFeatures((prev) => prev.map((f) => (f.authorId === authorId ? { ...f, media } : f)));
   }, []);
 
+  const loadProfile = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, name, username, tier, is_hall_of_fame_editor")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!data) return;
+    setUser({
+      id: data.id,
+      name: data.name,
+      username: data.username,
+      tier: data.tier === "pro" ? "pro" : "free",
+      isHallOfFameEditor: data.is_hall_of_fame_editor,
+    });
+  }, []);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        void loadProfile(session.user.id);
+      } else {
+        setUser(null);
+      }
+    });
+    void supabase.auth.getSession().then(async ({ data }) => {
+      if (data.session?.user) await loadProfile(data.session.user.id);
+      setAuthLoading(false);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [loadProfile]);
+
+  useEffect(() => {
+    void supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("is_hall_of_fame_editor", true)
+      .then(({ count }) => setHofEditorCount(count ?? 0));
+  }, [user]);
 
   const signUp = useCallback(
-    ({ name, username, accessCode }: SignUpInput) => {
+    async ({ email, password, name, username, accessCode }: SignUpInput): Promise<AuthResult> => {
       const handle = username.replace(/^@/, "").trim().toLowerCase();
+      const mail = email.trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail))
+        return { ok: false, error: "Enter a valid email address." };
+      if (password.length < 6)
+        return { ok: false, error: "Password must be at least 6 characters." };
       if (!name.trim()) return { ok: false, error: "Display name is required." };
       if (!/^[a-z0-9._]{3,20}$/.test(handle))
         return { ok: false, error: "Username must be 3–20 chars: a–z, 0–9, dot or underscore." };
-      const taken =
-        AUTHORS.some((a) => a.username === handle) || accounts.some((a) => a.username === handle);
-      if (taken) return { ok: false, error: `@${handle} is already taken. Try another handle.` };
 
-      let editor = false;
-      if (accessCode.trim() === HOF_CODE) {
-        if (hofEditorCount >= 5) {
-          return { ok: false, error: "All 5 Hall of Fame editor seats are filled." };
-        }
-        editor = true;
-        setHofEditorCount((c) => c + 1);
-      } else if (accessCode.trim().length > 0) {
+      const code = accessCode.trim();
+      if (code.length > 0 && code !== HOF_CODE)
         return { ok: false, error: "That secret access code is not valid." };
+
+      const { data: available } = await supabase.rpc("username_available", { _username: handle });
+      if (available === false)
+        return { ok: false, error: `@${handle} is already taken. Try another handle.` };
+
+      const { error } = await supabase.auth.signUp({
+        email: mail,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { name: name.trim(), username: handle },
+        },
+      });
+      if (error) return { ok: false, error: error.message };
+
+      if (code === HOF_CODE) {
+        const { data: redeemed } = await supabase.rpc("redeem_hof_code", { _code: code });
+        const result = redeemed as { ok: boolean; error?: string } | null;
+        if (result && !result.ok) return { ok: false, error: result.error ?? "Code rejected." };
       }
 
-      const account: SessionUser = {
-        id: `u${Date.now()}`,
-        name: name.trim(),
-        username: handle,
-        tier: "free",
-        isHallOfFameEditor: editor,
-      };
-      setAccounts((a) => [...a, account]);
-      setUser(account);
+      const { data: session } = await supabase.auth.getSession();
+      if (session.session?.user) await loadProfile(session.session.user.id);
       return { ok: true };
     },
-    [accounts, hofEditorCount],
+    [loadProfile],
   );
 
   const signIn = useCallback(
-    (username: string) => {
-      const handle = username.replace(/^@/, "").trim().toLowerCase();
-      const existing = accounts.find((a) => a.username === handle);
-      if (existing) {
-        setUser(existing);
-        return { ok: true };
-      }
-      const author = AUTHORS.find((a) => a.username === handle);
-      if (author) {
-        setUser({
-          id: author.id,
-          name: author.name,
-          username: author.username,
-          tier: author.isPro ? "pro" : "free",
-          isHallOfFameEditor: author.isHallOfFameEditor,
-        });
-        return { ok: true };
-      }
-      return { ok: false, error: "No account with that @username yet — sign up to create it." };
+    async (email: string, password: string): Promise<AuthResult> => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (error) return { ok: false, error: error.message };
+      if (data.user) await loadProfile(data.user.id);
+      return { ok: true };
     },
-    [accounts],
+    [loadProfile],
   );
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  }, []);
+
 
   const toggleUpvote = useCallback((bookId: string) => {
     setUpvoted((prev) => (prev.includes(bookId) ? prev.filter((id) => id !== bookId) : [...prev, bookId]));
@@ -317,11 +369,13 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     activeGenre,
     hofEditorCount,
     hofFeatures,
+    authLoading,
     upvoteCount,
     updateHofMedia,
     signUp,
     signIn,
-    signOut: () => setUser(null),
+    signOut,
+
     setFilter,
     setGenreSlot,
     setSearch,
