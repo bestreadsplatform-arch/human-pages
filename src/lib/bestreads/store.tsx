@@ -44,10 +44,15 @@ export type Draft = {
 };
 
 type SignUpInput = {
+  email: string;
+  password: string;
   name: string;
   username: string;
   accessCode: string;
 };
+
+type AuthResult = { ok: boolean; error?: string };
+
 
 type Store = {
   user: SessionUser | null;
