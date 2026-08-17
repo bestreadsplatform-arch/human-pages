@@ -195,6 +195,37 @@ export function Landing() {
                 <TabsContent value="signup" className="mt-5 space-y-4">
                   <h2 className="font-display text-2xl font-semibold">Create your handle</h2>
                   <div className="space-y-2">
+                    <Label htmlFor="su-email">Email</Label>
+                    <Input
+                      id="su-email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="su-pw">Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="su-pw"
+                        type={showPw ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPw((s) => !s)}
+                        className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
+                        aria-label={showPw ? "Hide password" : "Show password"}
+                      >
+                        {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+
                     <Label htmlFor="name">Display name</Label>
                     <Input
                       id="name"
