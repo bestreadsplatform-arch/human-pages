@@ -74,11 +74,13 @@ type Store = {
   activeGenre: string | null;
   hofEditorCount: number;
   hofFeatures: HofFeature[];
+  authLoading: boolean;
   upvoteCount: (book: Book) => number;
   updateHofMedia: (authorId: string, media: HofMedia) => void;
-  signUp: (input: SignUpInput) => { ok: boolean; error?: string };
-  signIn: (username: string) => { ok: boolean; error?: string };
-  signOut: () => void;
+  signUp: (input: SignUpInput) => Promise<AuthResult>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signOut: () => Promise<void>;
+
   setFilter: (f: TimeFilter) => void;
   setGenreSlot: (index: number, genre: string | null) => void;
   setSearch: (s: string) => void;
