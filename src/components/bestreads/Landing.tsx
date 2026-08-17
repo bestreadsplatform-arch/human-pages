@@ -44,25 +44,33 @@ export function Landing() {
   const { signIn, signUp } = useBestreads();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("signin");
+  const [busy, setBusy] = useState(false);
+  const [showPw, setShowPw] = useState(false);
 
-  const [handle, setHandle] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [newHandle, setNewHandle] = useState("");
   const [code, setCode] = useState("");
 
-  const doSignIn = () => {
-    const res = signIn(handle);
+  const doSignIn = async () => {
+    setBusy(true);
+    const res = await signIn(email, password);
+    setBusy(false);
     if (!res.ok) toast.error(res.error ?? "Could not sign in");
   };
 
-  const doSignUp = () => {
-    const res = signUp({ name, username: newHandle, accessCode: code });
+  const doSignUp = async () => {
+    setBusy(true);
+    const res = await signUp({ email, password, name, username: newHandle, accessCode: code });
+    setBusy(false);
     if (!res.ok) toast.error(res.error ?? "Could not sign up");
     else if (code.trim().length > 0)
       toast.success("Hall of Fame editor privileges unlocked", {
         description: "You can now edit the magazine.",
       });
   };
+
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-background">
