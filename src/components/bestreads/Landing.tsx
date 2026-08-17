@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowBigUp, BadgeCheck, KeyRound, PenLine } from "lucide-react";
+import { ArrowBigUp, BadgeCheck, Eye, EyeOff, KeyRound, PenLine } from "lucide-react";
 import { toast } from "sonner";
 
 import { BookCover } from "./BookCover";
