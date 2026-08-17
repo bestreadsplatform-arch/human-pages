@@ -258,9 +258,10 @@ export function Landing() {
                       placeholder="Magazine passkey"
                     />
                   </div>
-                  <Button className="w-full" onClick={doSignUp}>
-                    Join Bestreads
+                  <Button className="w-full" onClick={doSignUp} disabled={busy}>
+                    {busy ? "Creating…" : "Join Bestreads"}
                   </Button>
+
                 </TabsContent>
               </Tabs>
               <button
