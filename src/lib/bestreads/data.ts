@@ -18,6 +18,7 @@ export type Book = {
   excerpt: string;
   pages: number;
   cover: number; // palette index 0-9
+  coverImage?: string | undefined;
   launchDate: string;
   status: "published" | "draft";
   upvotes: Record<TimeFilter, number>;
