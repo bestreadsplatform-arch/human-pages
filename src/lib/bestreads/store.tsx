@@ -377,9 +377,39 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     [drafts, user],
   );
 
-  const publishDraft = useCallback((id: string) => {
-    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, status: "published" } : d)));
-  }, []);
+  const publishBook = useCallback(
+    async (d: Omit<Draft, "id" | "createdAt" | "status">): Promise<AuthResult> => {
+      if (!user) return { ok: false, error: "Sign in to publish." };
+      if (!d.title.trim()) return { ok: false, error: "Your text needs a title." };
+      const { error } = await supabase.from("books").insert({
+        author_id: user.id,
+        title: d.title.trim(),
+        summary: d.summary,
+        content: d.body,
+        hashtags: d.hashtags,
+        cover: d.cover,
+        cover_url: d.coverImage ?? null,
+        pages: Math.max(1, Math.ceil((d.body.length || 1) / 900)),
+        status: "published",
+      });
+      if (error) return { ok: false, error: error.message };
+      await refreshBooks();
+      return { ok: true };
+    },
+    [user, refreshBooks],
+  );
+
+  const publishDraft = useCallback(
+    async (id: string): Promise<AuthResult> => {
+      const draft = drafts.find((d) => d.id === id);
+      if (!draft) return { ok: false, error: "Draft not found." };
+      const res = await publishBook(draft);
+      if (!res.ok) return res;
+      setDrafts((prev) => prev.filter((d) => d.id !== id));
+      return { ok: true };
+    },
+    [drafts, publishBook],
+  );
 
   const deleteDraft = useCallback((id: string) => {
     setDrafts((prev) => prev.filter((d) => d.id !== id));
