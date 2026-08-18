@@ -116,7 +116,8 @@ const FREE_DRAFT_LIMIT = 5;
 export function BestreadsProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [books] = useState<Book[]>(BOOKS);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [authors, setAuthors] = useState<Author[]>(AUTHORS);
 
     const [drafts, setDrafts] = useState<Draft[]>([]);
   const [filter, setFilter] = useState<TimeFilter>("today");
