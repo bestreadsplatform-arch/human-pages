@@ -64,7 +64,7 @@ function Scatter() {
           className="absolute"
           style={{
             top: s.top,
-            [s.edge]: s.offset,
+            ...(s.edge === "left" ? { left: s.offset } : { right: s.offset }),
             transform: `rotate(${s.rotate})`,
             fontSize: `${s.size}rem`,
             opacity: s.opacity,
@@ -541,7 +541,7 @@ export function HallOfFame() {
       <Feather className="pointer-events-none absolute -top-4 -left-10 size-40 rotate-12 text-accent opacity-60" />
       <PaintbrushVertical className="pointer-events-none absolute top-96 -right-12 size-36 -rotate-12 text-accent opacity-50" />
 
-      <header className="relative py-12 text-center">
+      <header className="relative border-y-2 border-double border-border py-12 text-center">
         <p className="text-[0.65rem] tracking-[0.35em] text-muted-foreground uppercase">
           The Hall of Fame Magazine · {HOF_ISSUE.issue} · {HOF_ISSUE.cadence}
         </p>
@@ -549,9 +549,12 @@ export function HallOfFame() {
           Five Rising Authors
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{HOF_ISSUE.window}</p>
-        <p className="mx-auto mt-6 max-w-xl text-left text-base leading-relaxed">
-          {HOF_ISSUE.editorial}
-        </p>
+        <div className="mx-auto mt-6 max-w-xl">
+          <Ornament label="Editorial" />
+          <p className="mt-4 text-left text-base leading-relaxed first-letter:font-display first-letter:mr-2 first-letter:float-left first-letter:text-6xl first-letter:leading-[0.8] first-letter:font-semibold">
+            {HOF_ISSUE.editorial}
+          </p>
+        </div>
         {user?.isHallOfFameEditor ? (
           <p className="mt-6 inline-block rounded-full border border-gold bg-gold/15 px-3 py-1 text-xs font-semibold">
             Editor privileges active — seat granted by secret access code
@@ -563,14 +566,15 @@ export function HallOfFame() {
         )}
       </header>
 
-      <div className="relative space-y-16">
+      <div className="relative space-y-20 pt-12">
         {hofFeatures.map((f, i) => {
           const author = authorById(f.authorId);
           return (
-            <article key={f.authorId} className="relative border-t border-border pt-10">
-              <div className="flex items-start justify-between gap-4">
+            <article key={f.authorId} className="relative">
+              <Ornament label={`Portrait ${String(i + 1).padStart(2, "0")} of 05`} />
+              <div className="mt-8 flex items-start justify-between gap-4">
                 <div>
-                  <span className="text-metric text-xs tracking-widest text-muted-foreground">
+                  <span className="text-metric inline-flex size-9 items-center justify-center rounded-full border border-gold text-xs tracking-widest">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <h2 className="font-display mt-2 text-3xl font-semibold">{f.headline}</h2>
@@ -585,15 +589,17 @@ export function HallOfFame() {
                 ) : null}
               </div>
 
-              <p className="mt-4 text-lg leading-relaxed">{f.standfirst}</p>
+              <p className="mt-4 border-l-2 border-border pl-4 text-lg leading-relaxed text-pretty">
+                {f.standfirst}
+              </p>
 
               <blockquote className="font-display my-8 border-l-2 border-gold pl-6 text-2xl leading-snug italic">
                 “{f.quote}”
               </blockquote>
 
-              <div className="space-y-4">
+              <div className="space-y-4 rounded-xl border border-border bg-card/50 p-6 shadow-soft">
                 {f.interview.map((qa) => (
-                  <div key={qa.q}>
+                  <div key={qa.q} className="border-b border-dashed border-border pb-3 last:border-0 last:pb-0">
                     <p className="text-xs font-semibold tracking-widest uppercase">{qa.q}</p>
                     <p className="mt-1 text-base leading-relaxed text-muted-foreground">{qa.a}</p>
                   </div>
