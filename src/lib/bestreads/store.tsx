@@ -96,7 +96,9 @@ type Store = {
   toggleLibrary: (bookId: string) => { ok: boolean; error?: string };
   setTier: (t: Tier) => void;
   saveDraft: (d: Omit<Draft, "id" | "createdAt" | "status">) => { ok: boolean; error?: string };
-  publishDraft: (id: string) => void;
+  publishDraft: (id: string) => Promise<AuthResult>;
+  publishBook: (d: Omit<Draft, "id" | "createdAt" | "status">) => Promise<AuthResult>;
+  refreshBooks: () => Promise<void>;
   deleteDraft: (id: string) => void;
   setMaxPages: (p: number | null) => void;
   setActiveGenre: (g: string | null) => void;
@@ -448,7 +450,10 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
   }, [books, search, filter, user, maxPages, activeGenre]);
 
   const topTen = useMemo(() => visibleBooks.slice(0, 10), [visibleBooks]);
-  const streamBooksBase = useMemo(() => visibleBooks.slice(10), [visibleBooks]);
+  const streamBooksBase = useMemo(
+    () => (visibleBooks.length > 10 ? visibleBooks.slice(10) : visibleBooks),
+    [visibleBooks],
+  );
   const streamBooks = useMemo(
     () =>
       feedTab === "following"
@@ -474,7 +479,7 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
 
   const value: Store = {
     user,
-    authors: AUTHORS,
+    authors,
     books,
     drafts,
     filter,
@@ -512,6 +517,8 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     setTier,
     saveDraft,
     publishDraft,
+    publishBook,
+    refreshBooks,
     deleteDraft,
     setMaxPages,
     setActiveGenre,
