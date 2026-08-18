@@ -36,34 +36,54 @@ import {
 import { useBestreads } from "@/lib/bestreads/store";
 import { cn } from "@/lib/utils";
 
-const SCATTER = [
-  { emoji: "✒️", top: "6%", left: "-3%", rotate: "-12deg" },
-  { emoji: "📝", top: "18%", right: "-4%", rotate: "9deg" },
-  { emoji: "✏️", top: "34%", left: "-5%", rotate: "14deg" },
-  { emoji: "🎨", top: "48%", right: "-3%", rotate: "-8deg" },
-  { emoji: "🧹", top: "62%", left: "-4%", rotate: "6deg" },
-  { emoji: "📖", top: "74%", right: "-5%", rotate: "-14deg" },
-  { emoji: "✒️", top: "88%", left: "-3%", rotate: "10deg" },
-  { emoji: "📓", top: "96%", right: "-4%", rotate: "-6deg" },
-];
+const GLYPHS = ["✒️", "✏️", "📝", "🎨", "🧹", "📜", "📖", "📐", "✂️", "📓", "🖋️", "🕯️"];
+
+/** Deterministic watermark field covering the whole article, not just the top. */
+const SCATTER = Array.from({ length: 36 }, (_, i) => {
+  const side = i % 2 === 0;
+  return {
+    emoji: GLYPHS[i % GLYPHS.length]!,
+    top: `${1.5 + i * 2.7}%`,
+    edge: side ? "left" : "right",
+    offset: `${-6 + ((i * 37) % 9)}%`,
+    rotate: `${((i * 53) % 40) - 20}deg`,
+    size: 1.4 + ((i * 17) % 5) * 0.22,
+    opacity: 0.1 + ((i * 29) % 5) * 0.035,
+  };
+});
 
 function Scatter() {
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 hidden select-none lg:block" aria-hidden>
+    <div
+      className="pointer-events-none absolute inset-0 -z-10 hidden select-none lg:block"
+      aria-hidden
+    >
       {SCATTER.map((s, i) => (
         <span
           key={i}
-          className="absolute text-3xl opacity-25"
+          className="absolute"
           style={{
             top: s.top,
-            left: s.left,
-            right: s.right,
+            ...(s.edge === "left" ? { left: s.offset } : { right: s.offset }),
             transform: `rotate(${s.rotate})`,
+            fontSize: `${s.size}rem`,
+            opacity: s.opacity,
+            filter: "grayscale(0.35)",
           }}
         >
           {s.emoji}
         </span>
       ))}
+    </div>
+  );
+}
+
+function Ornament({ label }: { label?: string }) {
+  return (
+    <div className="flex items-center gap-4 py-2 text-muted-foreground">
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-border" />
+      <span className="font-display text-xs tracking-[0.4em] uppercase">{label ?? "✦ ✦ ✦"}</span>
+      <span className="h-px flex-1 bg-gradient-to-l from-transparent via-border to-border" />
     </div>
   );
 }
@@ -521,7 +541,7 @@ export function HallOfFame() {
       <Feather className="pointer-events-none absolute -top-4 -left-10 size-40 rotate-12 text-accent opacity-60" />
       <PaintbrushVertical className="pointer-events-none absolute top-96 -right-12 size-36 -rotate-12 text-accent opacity-50" />
 
-      <header className="relative py-12 text-center">
+      <header className="relative border-y-2 border-double border-border py-12 text-center">
         <p className="text-[0.65rem] tracking-[0.35em] text-muted-foreground uppercase">
           The Hall of Fame Magazine · {HOF_ISSUE.issue} · {HOF_ISSUE.cadence}
         </p>
@@ -529,9 +549,12 @@ export function HallOfFame() {
           Five Rising Authors
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{HOF_ISSUE.window}</p>
-        <p className="mx-auto mt-6 max-w-xl text-left text-base leading-relaxed">
-          {HOF_ISSUE.editorial}
-        </p>
+        <div className="mx-auto mt-6 max-w-xl">
+          <Ornament label="Editorial" />
+          <p className="mt-4 text-left text-base leading-relaxed first-letter:font-display first-letter:mr-2 first-letter:float-left first-letter:text-6xl first-letter:leading-[0.8] first-letter:font-semibold">
+            {HOF_ISSUE.editorial}
+          </p>
+        </div>
         {user?.isHallOfFameEditor ? (
           <p className="mt-6 inline-block rounded-full border border-gold bg-gold/15 px-3 py-1 text-xs font-semibold">
             Editor privileges active — seat granted by secret access code
@@ -543,14 +566,15 @@ export function HallOfFame() {
         )}
       </header>
 
-      <div className="relative space-y-16">
+      <div className="relative space-y-20 pt-12">
         {hofFeatures.map((f, i) => {
           const author = authorById(f.authorId);
           return (
-            <article key={f.authorId} className="relative border-t border-border pt-10">
-              <div className="flex items-start justify-between gap-4">
+            <article key={f.authorId} className="relative">
+              <Ornament label={`Portrait ${String(i + 1).padStart(2, "0")} of 05`} />
+              <div className="mt-8 flex items-start justify-between gap-4">
                 <div>
-                  <span className="text-metric text-xs tracking-widest text-muted-foreground">
+                  <span className="text-metric inline-flex size-9 items-center justify-center rounded-full border border-gold text-xs tracking-widest">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <h2 className="font-display mt-2 text-3xl font-semibold">{f.headline}</h2>
@@ -565,15 +589,17 @@ export function HallOfFame() {
                 ) : null}
               </div>
 
-              <p className="mt-4 text-lg leading-relaxed">{f.standfirst}</p>
+              <p className="mt-4 border-l-2 border-border pl-4 text-lg leading-relaxed text-pretty">
+                {f.standfirst}
+              </p>
 
               <blockquote className="font-display my-8 border-l-2 border-gold pl-6 text-2xl leading-snug italic">
                 “{f.quote}”
               </blockquote>
 
-              <div className="space-y-4">
+              <div className="space-y-4 rounded-xl border border-border bg-card/50 p-6 shadow-soft">
                 {f.interview.map((qa) => (
-                  <div key={qa.q}>
+                  <div key={qa.q} className="border-b border-dashed border-border pb-3 last:border-0 last:pb-0">
                     <p className="text-xs font-semibold tracking-widest uppercase">{qa.q}</p>
                     <p className="mt-1 text-base leading-relaxed text-muted-foreground">{qa.a}</p>
                   </div>

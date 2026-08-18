@@ -119,8 +119,7 @@ function ProChart({ book }: { book: Book }) {
 
 export function Bookshelf() {
   const { books, drafts, user, setView, deleteDraft, publishDraft, library } = useBestreads();
-  const mine = books.filter((b) => b.authorId === user?.id && b.status === "published");
-  const published = mine.length > 0 ? mine : books.slice(0, 3);
+  const published = books.filter((b) => b.authorId === user?.id && b.status === "published");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = published.find((b) => b.id === selectedId) ?? published[0] ?? null;
   const setSelected = (b: Book) => setSelectedId(b.id);
@@ -152,8 +151,10 @@ export function Bookshelf() {
                     size="sm"
                     variant="secondary"
                     onClick={() => {
-                      publishDraft(d.id);
-                      toast.success("Published");
+                      void publishDraft(d.id).then((res) => {
+                        if (res.ok) toast.success("Published to Bestreads");
+                        else toast.error(res.error ?? "Could not publish");
+                      });
                     }}
                   >
                     <Upload className="size-3" /> Publish
@@ -185,7 +186,7 @@ export function Bookshelf() {
                 )}
               >
                 <div className="w-9 shrink-0">
-                  <BookCover title={b.title} cover={b.cover} />
+                  <BookCover title={b.title} cover={b.cover} image={b.coverImage} />
                 </div>
                 <span className="font-display truncate text-sm font-semibold">{b.title}</span>
               </button>

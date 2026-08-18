@@ -11,11 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 import {
   AUTHORS,
-  BOOKS,
   GENRES,
   HOF_CODE,
   HOF_FEATURES,
   authorById,
+  registerAuthors,
   type Author,
   type Book,
   type HofFeature,
@@ -96,7 +96,9 @@ type Store = {
   toggleLibrary: (bookId: string) => { ok: boolean; error?: string };
   setTier: (t: Tier) => void;
   saveDraft: (d: Omit<Draft, "id" | "createdAt" | "status">) => { ok: boolean; error?: string };
-  publishDraft: (id: string) => void;
+  publishDraft: (id: string) => Promise<AuthResult>;
+  publishBook: (d: Omit<Draft, "id" | "createdAt" | "status">) => Promise<AuthResult>;
+  refreshBooks: () => Promise<void>;
   deleteDraft: (id: string) => void;
   setMaxPages: (p: number | null) => void;
   setActiveGenre: (g: string | null) => void;
@@ -116,7 +118,8 @@ const FREE_DRAFT_LIMIT = 5;
 export function BestreadsProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [books] = useState<Book[]>(BOOKS);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [authors, setAuthors] = useState<Author[]>(AUTHORS);
 
     const [drafts, setDrafts] = useState<Draft[]>([]);
   const [filter, setFilter] = useState<TimeFilter>("today");
@@ -175,6 +178,73 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
       .select("id", { count: "exact", head: true })
       .eq("is_hall_of_fame_editor", true)
       .then(({ count }) => setHofEditorCount(count ?? 0));
+  }, [user]);
+
+  const refreshBooks = useCallback(async () => {
+    const [{ data: rows }, { data: people }] = await Promise.all([
+      supabase
+        .from("books")
+        .select(
+          "id, author_id, title, summary, content, hashtags, cover, cover_url, pages, upvotes_count, reads_count, status, created_at",
+        )
+        .eq("status", "published")
+        .order("upvotes_count", { ascending: false }),
+      supabase.from("profiles").select("id, name, username, tier, is_hall_of_fame_editor"),
+    ]);
+
+    if (people) {
+      const mapped: Author[] = people.map((p) => ({
+        id: p.id,
+        name: p.name,
+        username: p.username,
+        bio: "",
+        isPro: p.tier === "pro",
+        isHallOfFameEditor: p.is_hall_of_fame_editor,
+      }));
+      registerAuthors(mapped);
+      setAuthors(mapped);
+    }
+
+    setBooks(
+      (rows ?? []).map((r) => ({
+        id: r.id,
+        authorId: r.author_id,
+        title: r.title,
+        summary: r.summary,
+        hashtags: r.hashtags ?? [],
+        excerpt: (r.content ?? "").slice(0, 240),
+        pages: r.pages,
+        cover: r.cover,
+        coverImage: r.cover_url ?? undefined,
+        launchDate: r.created_at,
+        status: "published" as const,
+        upvotes: {
+          today: r.upvotes_count,
+          week: r.upvotes_count,
+          month: r.upvotes_count,
+        },
+        totalUpvotes: r.upvotes_count,
+        views: r.reads_count,
+        shares: 0,
+        currentReads: 0,
+      })),
+    );
+  }, []);
+
+  useEffect(() => {
+    void refreshBooks();
+  }, [refreshBooks, user]);
+
+  useEffect(() => {
+    if (!user) {
+      setUpvoted([]);
+      return;
+    }
+    void supabase
+      .from("upvotes")
+      .select("book_id")
+      .eq("user_id", user.id)
+      .then(({ data }) => setUpvoted((data ?? []).map((u) => u.book_id)));
   }, [user]);
 
   const signUp = useCallback(
@@ -239,14 +309,39 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
-  const toggleUpvote = useCallback((bookId: string) => {
-    setUpvoted((prev) => (prev.includes(bookId) ? prev.filter((id) => id !== bookId) : [...prev, bookId]));
-  }, []);
-
-  const upvoteCount = useCallback(
-    (book: Book) => book.upvotes[filter] + (upvoted.includes(book.id) ? 1 : 0),
-    [filter, upvoted],
+  const toggleUpvote = useCallback(
+    (bookId: string) => {
+      if (!user) return;
+      const has = upvoted.includes(bookId);
+      const delta = has ? -1 : 1;
+      setUpvoted((prev) => (has ? prev.filter((id) => id !== bookId) : [...prev, bookId]));
+      setBooks((prev) =>
+        prev.map((b) =>
+          b.id === bookId
+            ? {
+                ...b,
+                totalUpvotes: Math.max(0, b.totalUpvotes + delta),
+                upvotes: {
+                  today: Math.max(0, b.upvotes.today + delta),
+                  week: Math.max(0, b.upvotes.week + delta),
+                  month: Math.max(0, b.upvotes.month + delta),
+                },
+              }
+            : b,
+        ),
+      );
+      void (async () => {
+        if (has) {
+          await supabase.from("upvotes").delete().eq("user_id", user.id).eq("book_id", bookId);
+        } else {
+          await supabase.from("upvotes").insert({ user_id: user.id, book_id: bookId });
+        }
+      })();
+    },
+    [user, upvoted],
   );
+
+  const upvoteCount = useCallback((book: Book) => book.upvotes[filter], [filter]);
 
   const toggleFollow = useCallback((authorId: string) => {
     setFollowing((prev) =>
@@ -284,9 +379,39 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     [drafts, user],
   );
 
-  const publishDraft = useCallback((id: string) => {
-    setDrafts((prev) => prev.map((d) => (d.id === id ? { ...d, status: "published" } : d)));
-  }, []);
+  const publishBook = useCallback(
+    async (d: Omit<Draft, "id" | "createdAt" | "status">): Promise<AuthResult> => {
+      if (!user) return { ok: false, error: "Sign in to publish." };
+      if (!d.title.trim()) return { ok: false, error: "Your text needs a title." };
+      const { error } = await supabase.from("books").insert({
+        author_id: user.id,
+        title: d.title.trim(),
+        summary: d.summary,
+        content: d.body,
+        hashtags: d.hashtags,
+        cover: d.cover,
+        cover_url: d.coverImage ?? null,
+        pages: Math.max(1, Math.ceil((d.body.length || 1) / 900)),
+        status: "published",
+      });
+      if (error) return { ok: false, error: error.message };
+      await refreshBooks();
+      return { ok: true };
+    },
+    [user, refreshBooks],
+  );
+
+  const publishDraft = useCallback(
+    async (id: string): Promise<AuthResult> => {
+      const draft = drafts.find((d) => d.id === id);
+      if (!draft) return { ok: false, error: "Draft not found." };
+      const res = await publishBook(draft);
+      if (!res.ok) return res;
+      setDrafts((prev) => prev.filter((d) => d.id !== id));
+      return { ok: true };
+    },
+    [drafts, publishBook],
+  );
 
   const deleteDraft = useCallback((id: string) => {
     setDrafts((prev) => prev.filter((d) => d.id !== id));
@@ -325,7 +450,10 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
   }, [books, search, filter, user, maxPages, activeGenre]);
 
   const topTen = useMemo(() => visibleBooks.slice(0, 10), [visibleBooks]);
-  const streamBooksBase = useMemo(() => visibleBooks.slice(10), [visibleBooks]);
+  const streamBooksBase = useMemo(
+    () => (visibleBooks.length > 10 ? visibleBooks.slice(10) : visibleBooks),
+    [visibleBooks],
+  );
   const streamBooks = useMemo(
     () =>
       feedTab === "following"
@@ -351,7 +479,7 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
 
   const value: Store = {
     user,
-    authors: AUTHORS,
+    authors,
     books,
     drafts,
     filter,
@@ -389,6 +517,8 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
     setTier,
     saveDraft,
     publishDraft,
+    publishBook,
+    refreshBooks,
     deleteDraft,
     setMaxPages,
     setActiveGenre,
