@@ -45,7 +45,10 @@ function CoverCropper({
                 src={src}
                 alt="Cover preview"
                 className="h-full w-full object-cover"
-                style={{ objectPosition: `${x}% ${y}%`, transform: `scale(${zoom / 100})` }}
+                style={{
+                  objectPosition: "center",
+                  transform: `scale(${zoom / 100}) translate(${(50 - x) / 2}%, ${(50 - y) / 2}%)`,
+                }}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
@@ -99,7 +102,7 @@ function CoverCropper({
 }
 
 export function Studio() {
-  const { saveDraft, setView, user } = useBestreads();
+  const { saveDraft, publishBook, setView, user } = useBestreads();
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [tagInput, setTagInput] = useState("");
@@ -122,17 +125,18 @@ export function Studio() {
     setTagInput("");
   };
 
-  const persist = (publish: boolean) => {
+  const persist = async (publish: boolean) => {
     if (!title.trim()) {
       toast.error("Your text needs a title.");
       return;
     }
-    const res = saveDraft({ title, summary, hashtags: tags, body, cover: 2, coverImage });
+    const payload = { title, summary, hashtags: tags, body, cover: 2, coverImage };
+    const res = publish ? await publishBook(payload) : saveDraft(payload);
     if (!res.ok) {
       toast.error(res.error ?? "Could not save");
       return;
     }
-    toast.success(publish ? "Sent to your bookshelf as published draft" : "Draft saved");
+    toast.success(publish ? "Published — live on Bestreads" : "Draft saved");
     setView("bookshelf");
   };
 
@@ -201,10 +205,10 @@ export function Studio() {
           <Button variant="outline" className="w-full" onClick={() => setCropperOpen(true)}>
             <ImagePlus className="size-4" /> Upload Cover Art
           </Button>
-          <Button className="w-full" onClick={() => persist(true)}>
+          <Button className="w-full" onClick={() => void persist(true)}>
             <Send className="size-4" /> Publish
           </Button>
-          <Button variant="secondary" className="w-full" onClick={() => persist(false)}>
+          <Button variant="secondary" className="w-full" onClick={() => void persist(false)}>
             <Save className="size-4" /> Save draft
           </Button>
           <p className="rounded-md border border-border bg-card p-3 text-xs font-semibold">
