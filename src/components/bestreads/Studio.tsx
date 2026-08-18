@@ -46,8 +46,8 @@ function CoverCropper({
                 alt="Cover preview"
                 className="h-full w-full object-cover"
                 style={{
-                  objectPosition: "center",
-                  transform: `scale(${zoom / 100}) translate(${(50 - x) / 2}%, ${(50 - y) / 2}%)`,
+                  objectPosition: `${x}% ${y}%`,
+                  transform: `scale(${zoom / 100}) translate(${((50 - x) * (zoom / 100 - 1)) / 2}%, ${((50 - y) * (zoom / 100 - 1)) / 2}%)`,
                 }}
               />
             ) : (
