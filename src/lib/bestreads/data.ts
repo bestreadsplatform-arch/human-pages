@@ -152,7 +152,23 @@ function hash(str: string) {
 }
 
 
-export const authorById = (id: string) => AUTHORS.find((a) => a.id === id)!;
+/** Live registry of real authors loaded from the database. */
+const liveAuthors = new Map<string, Author>();
+
+export function registerAuthors(list: Author[]) {
+  list.forEach((a) => liveAuthors.set(a.id, a));
+}
+
+export const authorById = (id: string): Author =>
+  liveAuthors.get(id) ??
+  AUTHORS.find((a) => a.id === id) ?? {
+    id,
+    name: "Unknown writer",
+    username: "unknown",
+    bio: "",
+    isPro: false,
+    isHallOfFameEditor: false,
+  };
 
 /* ---------- CEST reset logic (UTC+2) ---------- */
 
