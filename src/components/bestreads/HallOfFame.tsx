@@ -36,34 +36,54 @@ import {
 import { useBestreads } from "@/lib/bestreads/store";
 import { cn } from "@/lib/utils";
 
-const SCATTER = [
-  { emoji: "✒️", top: "6%", left: "-3%", rotate: "-12deg" },
-  { emoji: "📝", top: "18%", right: "-4%", rotate: "9deg" },
-  { emoji: "✏️", top: "34%", left: "-5%", rotate: "14deg" },
-  { emoji: "🎨", top: "48%", right: "-3%", rotate: "-8deg" },
-  { emoji: "🧹", top: "62%", left: "-4%", rotate: "6deg" },
-  { emoji: "📖", top: "74%", right: "-5%", rotate: "-14deg" },
-  { emoji: "✒️", top: "88%", left: "-3%", rotate: "10deg" },
-  { emoji: "📓", top: "96%", right: "-4%", rotate: "-6deg" },
-];
+const GLYPHS = ["✒️", "✏️", "📝", "🎨", "🧹", "📜", "📖", "📐", "✂️", "📓", "🖋️", "🕯️"];
+
+/** Deterministic watermark field covering the whole article, not just the top. */
+const SCATTER = Array.from({ length: 36 }, (_, i) => {
+  const side = i % 2 === 0;
+  return {
+    emoji: GLYPHS[i % GLYPHS.length]!,
+    top: `${1.5 + i * 2.7}%`,
+    edge: side ? "left" : "right",
+    offset: `${-6 + ((i * 37) % 9)}%`,
+    rotate: `${((i * 53) % 40) - 20}deg`,
+    size: 1.4 + ((i * 17) % 5) * 0.22,
+    opacity: 0.1 + ((i * 29) % 5) * 0.035,
+  };
+});
 
 function Scatter() {
   return (
-    <div className="pointer-events-none absolute inset-0 -z-10 hidden select-none lg:block" aria-hidden>
+    <div
+      className="pointer-events-none absolute inset-0 -z-10 hidden select-none lg:block"
+      aria-hidden
+    >
       {SCATTER.map((s, i) => (
         <span
           key={i}
-          className="absolute text-3xl opacity-25"
+          className="absolute"
           style={{
             top: s.top,
-            left: s.left,
-            right: s.right,
+            [s.edge]: s.offset,
             transform: `rotate(${s.rotate})`,
+            fontSize: `${s.size}rem`,
+            opacity: s.opacity,
+            filter: "grayscale(0.35)",
           }}
         >
           {s.emoji}
         </span>
       ))}
+    </div>
+  );
+}
+
+function Ornament({ label }: { label?: string }) {
+  return (
+    <div className="flex items-center gap-4 py-2 text-muted-foreground">
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-border" />
+      <span className="font-display text-xs tracking-[0.4em] uppercase">{label ?? "✦ ✦ ✦"}</span>
+      <span className="h-px flex-1 bg-gradient-to-l from-transparent via-border to-border" />
     </div>
   );
 }
