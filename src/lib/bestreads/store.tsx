@@ -11,11 +11,11 @@ import { supabase } from "@/integrations/supabase/client";
 
 import {
   AUTHORS,
-  BOOKS,
   GENRES,
   HOF_CODE,
   HOF_FEATURES,
   authorById,
+  registerAuthors,
   type Author,
   type Book,
   type HofFeature,
