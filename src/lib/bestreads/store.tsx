@@ -178,6 +178,73 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
       .then(({ count }) => setHofEditorCount(count ?? 0));
   }, [user]);
 
+  const refreshBooks = useCallback(async () => {
+    const [{ data: rows }, { data: people }] = await Promise.all([
+      supabase
+        .from("books")
+        .select(
+          "id, author_id, title, summary, content, hashtags, cover, cover_url, pages, upvotes_count, reads_count, status, created_at",
+        )
+        .eq("status", "published")
+        .order("upvotes_count", { ascending: false }),
+      supabase.from("profiles").select("id, name, username, tier, is_hall_of_fame_editor"),
+    ]);
+
+    if (people) {
+      const mapped: Author[] = people.map((p) => ({
+        id: p.id,
+        name: p.name,
+        username: p.username,
+        bio: "",
+        isPro: p.tier === "pro",
+        isHallOfFameEditor: p.is_hall_of_fame_editor,
+      }));
+      registerAuthors(mapped);
+      setAuthors(mapped);
+    }
+
+    setBooks(
+      (rows ?? []).map((r) => ({
+        id: r.id,
+        authorId: r.author_id,
+        title: r.title,
+        summary: r.summary,
+        hashtags: r.hashtags ?? [],
+        excerpt: (r.content ?? "").slice(0, 240),
+        pages: r.pages,
+        cover: r.cover,
+        coverImage: r.cover_url ?? undefined,
+        launchDate: r.created_at,
+        status: "published" as const,
+        upvotes: {
+          today: r.upvotes_count,
+          week: r.upvotes_count,
+          month: r.upvotes_count,
+        },
+        totalUpvotes: r.upvotes_count,
+        views: r.reads_count,
+        shares: 0,
+        currentReads: 0,
+      })),
+    );
+  }, []);
+
+  useEffect(() => {
+    void refreshBooks();
+  }, [refreshBooks, user]);
+
+  useEffect(() => {
+    if (!user) {
+      setUpvoted([]);
+      return;
+    }
+    void supabase
+      .from("upvotes")
+      .select("book_id")
+      .eq("user_id", user.id)
+      .then(({ data }) => setUpvoted((data ?? []).map((u) => u.book_id)));
+  }, [user]);
+
   const signUp = useCallback(
     async ({ email, password, name, username, accessCode }: SignUpInput): Promise<AuthResult> => {
       const handle = username.replace(/^@/, "").trim().toLowerCase();
