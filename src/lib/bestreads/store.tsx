@@ -307,14 +307,39 @@ export function BestreadsProvider({ children }: { children: ReactNode }) {
   }, []);
 
 
-  const toggleUpvote = useCallback((bookId: string) => {
-    setUpvoted((prev) => (prev.includes(bookId) ? prev.filter((id) => id !== bookId) : [...prev, bookId]));
-  }, []);
-
-  const upvoteCount = useCallback(
-    (book: Book) => book.upvotes[filter] + (upvoted.includes(book.id) ? 1 : 0),
-    [filter, upvoted],
+  const toggleUpvote = useCallback(
+    (bookId: string) => {
+      if (!user) return;
+      const has = upvoted.includes(bookId);
+      const delta = has ? -1 : 1;
+      setUpvoted((prev) => (has ? prev.filter((id) => id !== bookId) : [...prev, bookId]));
+      setBooks((prev) =>
+        prev.map((b) =>
+          b.id === bookId
+            ? {
+                ...b,
+                totalUpvotes: Math.max(0, b.totalUpvotes + delta),
+                upvotes: {
+                  today: Math.max(0, b.upvotes.today + delta),
+                  week: Math.max(0, b.upvotes.week + delta),
+                  month: Math.max(0, b.upvotes.month + delta),
+                },
+              }
+            : b,
+        ),
+      );
+      void (async () => {
+        if (has) {
+          await supabase.from("upvotes").delete().eq("user_id", user.id).eq("book_id", bookId);
+        } else {
+          await supabase.from("upvotes").insert({ user_id: user.id, book_id: bookId });
+        }
+      })();
+    },
+    [user, upvoted],
   );
+
+  const upvoteCount = useCallback((book: Book) => book.upvotes[filter], [filter]);
 
   const toggleFollow = useCallback((authorId: string) => {
     setFollowing((prev) =>
